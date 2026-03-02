@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Foz Cidade em Foco</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --header-h: 56px;
+    --accent: #FF3B30;
+    --accent2: #FF9500;
+    --dark: #0a0a0a;
+    --surface: #141414;
+    --glass: rgba(255,255,255,0.06);
+    --text: #f5f5f5;
+    --muted: rgba(245,245,245,0.55);
+  }
+
+  html, body { height: 100%; overflow: hidden; background: var(--dark); color: var(--text); font-family: 'DM Sans', sans-serif; }
+
+  /* ─── HEADER ─────────────────────────────────── */
+  header {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    height: var(--header-h);
+    background: rgba(10,10,10,0.85);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px;
+  }
+
+  .logo {
+    display: flex; align-items: center; gap: 8px;
+    text-decoration: none;
+  }
+  .logo-icon {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 800; color: white;
+    letter-spacing: -0.5px;
+  }
+  .logo-text { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 1px; color: var(--text); }
+  .logo-text span { color: var(--accent); }
+
+  nav { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; max-width: 55%; }
+  nav::-webkit-scrollbar { display: none; }
+  .nav-pill {
+    flex-shrink: 0; padding: 5px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 500; cursor: pointer;
+    background: transparent; border: 1px solid rgba(255,255,255,0.12);
+    color: var(--muted); transition: all .2s;
+    white-space: nowrap;
+  }
+  .nav-pill.active, .nav-pill:hover { background: var(--accent); border-color: var(--accent); color: white; }
+
+  .header-actions { display: flex; gap: 8px; align-items: center; }
+  .icon-btn {
+    width: 34px; height: 34px; border-radius: 50%; background: var(--glass);
+    border: 1px solid rgba(255,255,255,0.1); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; transition: background .2s;
+  }
+  .icon-btn:hover { background: rgba(255,255,255,0.12); }
+
+  /* ─── FEED ───────────────────────────────────── */
+  #feed {
+    position: fixed; top: var(--header-h); left: 0; right: 0;
+    bottom: 0;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  #feed::-webkit-scrollbar { display: none; }
+
+  .card {
+    width: 100%; height: calc(100vh - var(--header-h));
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    position: relative;
+    overflow: hidden;
+    background: var(--dark);
+    flex-shrink: 0;
+  }
+
+  /* BG */
+  .card-bg {
+    position: absolute; inset: 0;
+    background-size: cover; background-position: center;
+    transform: scale(1.05);
+    transition: transform 6s ease-out;
+    will-change: transform;
+  }
+  .card.active .card-bg { transform: scale(1); }
+
+  .card-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.15) 0%,
+      rgba(0,0,0,0) 30%,
+      rgba(0,0,0,0) 45%,
+      rgba(0,0,0,0.75) 70%,
+      rgba(0,0,0,0.95) 100%
+    );
+  }
+
+  /* VIDEO */
+  .card video {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover;
+  }
+
+  /* VIDEO PAUSED OVERLAY */
+  .video-paused-overlay {
+    position: absolute; inset: 0; z-index: 5;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+  .play-btn-big {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(12px);
+    border: 2.5px solid rgba(255,255,255,0.6);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .2s, background .2s;
+  }
+  .play-btn-big svg { margin-left: 5px; }
+  .video-paused-overlay:hover .play-btn-big,
+  .video-paused-overlay:active .play-btn-big { transform: scale(1.1); background: rgba(255,59,48,0.6); }
+
+  .video-duration {
+    position: absolute; bottom: 180px; left: 16px; z-index: 12;
+    background: rgba(0,0,0,0.65); backdrop-filter: blur(6px);
+    padding: 4px 10px; border-radius: 8px;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.5px;
+    color: white; pointer-events: none;
+  }
+
+  .video-rec-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 0 rgba(255,59,48,0.6);
+    animation: ping 1.5s infinite;
+    display: inline-block;
+  }
+  @keyframes ping {
+    0% { box-shadow: 0 0 0 0 rgba(255,59,48,0.6); }
+    70% { box-shadow: 0 0 0 8px rgba(255,59,48,0); }
+    100% { box-shadow: 0 0 0 0 rgba(255,59,48,0); }
+  }
+  .video-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: white;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+  }
+
+  /* AD card */
+  .card.ad-card .card-bg {
+    filter: brightness(0.7);
+  }
+  .ad-badge {
+    position: absolute; top: 12px; right: 12px;
+    background: rgba(255,255,255,0.15); backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 3px 10px; border-radius: 20px;
+    font-size: 10px; font-weight: 600; letter-spacing: 1px;
+    color: rgba(255,255,255,0.8); text-transform: uppercase;
+    z-index: 10;
+  }
+
+  /* CATEGORY TAG */
+  .cat-tag {
+    position: absolute; top: 16px; left: 16px;
+    display: flex; align-items: center; gap: 6px;
+    z-index: 10;
+    transform: translateY(-8px); opacity: 0;
+    transition: all .4s .1s cubic-bezier(.34,1.56,.64,1);
+  }
+  .card.active .cat-tag { transform: translateY(0); opacity: 1; }
+  .cat-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  .cat-label {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1.5px; color: white;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.5);
+  }
+
+  /* CONTENT */
+  .card-content {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 20px 16px 28px;
+    z-index: 10;
+    transform: translateY(12px); opacity: 0;
+    transition: all .45s .05s cubic-bezier(.34,1.2,.64,1);
+  }
+  .card.active .card-content { transform: translateY(0); opacity: 1; }
+
+  .card-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(22px, 5.5vw, 30px);
+    line-height: 1.2;
+    color: white;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.4);
+    margin-bottom: 10px;
+  }
+  .card-lead {
+    font-size: 13px; color: rgba(255,255,255,0.78); line-height: 1.5;
+    margin-bottom: 14px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .card-meta {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 11px; color: var(--muted); margin-bottom: 16px;
+  }
+  .meta-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--muted); }
+
+  /* ACTIONS */
+  .card-actions {
+    position: absolute; right: 12px; bottom: 100px;
+    display: flex; flex-direction: column; align-items: center; gap: 18px;
+    z-index: 10;
+    transform: translateX(16px); opacity: 0;
+    transition: all .4s .2s cubic-bezier(.34,1.4,.64,1);
+  }
+  .card.active .card-actions { transform: translateX(0); opacity: 1; }
+
+  .action-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    cursor: pointer; border: none; background: none; color: white;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .action-icon {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    transition: transform .15s, background .15s;
+  }
+  .action-btn:active .action-icon { transform: scale(0.88); background: rgba(255,255,255,0.22); }
+  .action-btn.liked .action-icon { background: rgba(255,59,48,0.3); border-color: var(--accent); }
+  .action-count { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.85); }
+
+  /* READ MORE */
+  .read-more {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 16px; border-radius: 24px;
+    background: white; color: var(--dark);
+    font-size: 13px; font-weight: 600;
+    text-decoration: none;
+    transition: transform .15s, opacity .15s;
+  }
+  .read-more:active { transform: scale(0.96); opacity: 0.9; }
+
+  /* AD CTA */
+  .ad-cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px; border-radius: 24px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer; border: none;
+    transition: transform .15s;
+  }
+  .ad-cta:active { transform: scale(0.96); }
+  .ad-brand { font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 6px; }
+  .ad-title { font-family: 'Bebas Neue', sans-serif; font-size: 28px; line-height: 1.1; margin-bottom: 8px; }
+
+  /* MUTE BTN */
+  #mute-btn {
+    position: fixed; top: calc(var(--header-h) + 12px); right: 12px; z-index: 50;
+    width: 34px; height: 34px; border-radius: 50%;
+    background: rgba(0,0,0,0.5); backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; cursor: pointer; color: white;
+    opacity: 0; transition: opacity .3s;
+  }
+  #mute-btn.visible { opacity: 1; }
+
+  /* PROGRESS DOTS */
+  #progress-dots {
+    position: fixed; right: 6px; top: 50%; transform: translateY(-50%);
+    z-index: 50; display: flex; flex-direction: column; gap: 5px;
+    pointer-events: none;
+  }
+  .dot {
+    width: 3px; border-radius: 3px; background: rgba(255,255,255,0.25);
+    transition: height .3s, background .3s;
+    height: 12px;
+  }
+  .dot.active { background: white; height: 22px; }
+
+  /* BANNER OVERLAY AD */
+  .banner-overlay {
+    position: absolute; bottom: 70px; left: 12px; right: 60px;
+    background: rgba(10,10,10,0.82); backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px; padding: 10px 12px;
+    display: flex; align-items: center; gap: 10px;
+    z-index: 15;
+    transform: translateY(20px); opacity: 0;
+    transition: all .4s .8s cubic-bezier(.34,1.2,.64,1);
+    pointer-events: none;
+  }
+  .card.active .banner-overlay { transform: translateY(0); opacity: 1; pointer-events: auto; }
+  .banner-logo {
+    width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .banner-text { flex: 1; min-width: 0; }
+  .banner-text strong { font-size: 12px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .banner-text span { font-size: 10px; color: var(--muted); }
+  .banner-cta {
+    flex-shrink: 0; background: var(--accent); color: white; border: none;
+    padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; cursor: pointer;
+  }
+  .banner-close {
+    position: absolute; top: 4px; right: 6px; background: none; border: none;
+    color: var(--muted); font-size: 12px; cursor: pointer; line-height: 1;
+  }
+
+  /* SCROLL HINT */
+  #scroll-hint {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    z-index: 50; display: flex; flex-direction: column; align-items: center; gap: 6px;
+    animation: bounce 1.5s infinite;
+    pointer-events: none;
+    opacity: 0.7;
+  }
+  #scroll-hint span { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); }
+  #scroll-hint svg { opacity: 0.6; }
+  @keyframes bounce { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(6px); } }
+
+  /* LIKE BURST */
+  @keyframes burst {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.6); opacity: 0.8; }
+    100% { transform: scale(0); opacity: 0; }
+  }
+  .burst { animation: burst .4s ease forwards; }
+
+  /* LOADING SHIMMER */
+  @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <a class="logo" href="#">
+    <div class="logo-icon">FC</div>
+    <span class="logo-text">FOZ<span>.</span>FOCO</span>
+  </a>
+  <nav id="nav">
+    <div class="nav-pill active">Tudo</div>
+    <div class="nav-pill">Cidade</div>
+    <div class="nav-pill">Política</div>
+    <div class="nav-pill">Esporte</div>
+    <div class="nav-pill">Turismo</div>
+    <div class="nav-pill">Saúde</div>
+  </nav>
+  <div class="header-actions">
+    <div class="icon-btn">🔍</div>
+  </div>
+</header>
+
+<!-- MUTE -->
+<button id="mute-btn" onclick="toggleMute()">🔇</button>
+
+<!-- PROGRESS DOTS -->
+<div id="progress-dots"></div>
+
+<!-- SCROLL HINT -->
+<div id="scroll-hint">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+  <span>deslize</span>
+</div>
+
+<!-- FEED -->
+<div id="feed"></div>
+
+<script>
+const NEWS = [
+  {
+    type: 'photo',
+    category: 'Turismo',
+    title: 'Cataratas do Iguaçu batem recorde: 100 mil visitantes em fevereiro',
+    lead: 'Parque Nacional do Iguaçu registra mês histórico impulsionado pelo verão e promoções aéreas.',
+    time: '2h atrás',
+    author: 'Pedro Cunha',
+    likes: 1204,
+    shares: 432,
+    bg: 'https://images.unsplash.com/photo-1596402184320-417e7178b2cd?w=900&q=90',
+  },
+  {
+    type: 'video',
+    category: 'Turismo',
+    title: 'Veja como ficou a nova trilha das Cataratas após revitalização',
+    lead: 'Parque Nacional investiu R$ 3,5 mi em acessibilidade e nova sinalização para os visitantes.',
+    time: '3h atrás',
+    author: 'Redação FOZ',
+    likes: 2891,
+    shares: 760,
+    duration: '1:24',
+    bg: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=900&q=90',
+  },
+  {
+    type: 'photo',
+    category: 'Cidade',
+    title: 'Nova ciclovia conecta o Centro à Vila A com 4,2 km de extensão',
+    lead: 'Obras iniciadas esta semana prometem estrutura exclusiva para ciclistas e pedestres.',
+    time: '4h atrás',
+    author: 'Redação FOZ',
+    likes: 341,
+    shares: 89,
+    bg: 'https://images.unsplash.com/photo-1507035895480-2b3156c31fc8?w=900&q=90',
+    hasBanner: true,
+    banner: { logo: '🏗️', name: 'Construtora Iguaçu', sub: 'Construindo o futuro de Foz', cta: 'Saiba mais' }
+  },
+  {
+    type: 'ad',
+    brand: 'Shopping JL — Foz do Iguaçu',
+    title: 'Liquidação de verão — até 60% OFF',
+    lead: 'Roupas, eletrônicos e muito mais. Aproveite só este fim de semana!',
+    cta: 'Ver ofertas',
+    bg: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=900&q=90',
+  },
+  {
+    type: 'video',
+    category: 'Política',
+    title: 'Prefeito anuncia obras de R$ 8 mi para reforma de escolas municipais',
+    lead: 'Investimento beneficia 12 unidades de ensino na periferia. Obras começam em abril.',
+    time: '6h atrás',
+    author: 'Ana Ribeiro',
+    likes: 678,
+    shares: 201,
+    duration: '2:07',
+    bg: 'https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=900&q=90',
+  },
+  {
+    type: 'photo',
+    category: 'Esporte',
+    title: 'Foz Futebol Clube vence clássico e assume liderança do Paranaense',
+    lead: 'Vitória por 2x1 no Estádio Olímpico em jogo eletrizante disputado na noite de domingo.',
+    time: '8h atrás',
+    author: 'Lucas Moura',
+    likes: 2105,
+    shares: 890,
+    bg: 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=900&q=90',
+    hasBanner: true,
+    banner: { logo: '⚽', name: 'Arena Foz Esportes', sub: 'Equipamentos para campeões', cta: 'Comprar' }
+  },
+  {
+    type: 'photo',
+    category: 'Saúde',
+    title: 'UPA Central ganha ala exclusiva de atendimento pediátrico',
+    lead: 'Investimento de R$ 1,2 mi amplia capacidade de atendimento a crianças e reduz filas.',
+    time: '12h atrás',
+    author: 'Marina Costa',
+    likes: 892,
+    shares: 315,
+    bg: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=900&q=90',
+  },
+  {
+    type: 'ad',
+    brand: 'Clínica Bem Estar — Foz do Iguaçu',
+    title: 'Consultas a partir de R$ 89',
+    lead: 'Cardiologia, ortopedia e mais de 20 especialidades. Agende online agora.',
+    cta: 'Agendar consulta',
+    bg: 'https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=900&q=90',
+  },
+  {
+    type: 'video',
+    category: 'Turismo',
+    title: 'Itaipu lança passeio noturno com show de luzes na barragem',
+    lead: 'Experiência imersiva com projeções e trilha sonora original às sextas e sábados.',
+    time: '1d atrás',
+    author: 'Redação FOZ',
+    likes: 3240,
+    shares: 1120,
+    duration: '0:58',
+    bg: 'https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=900&q=90',
+  },
+  {
+    type: 'photo',
+    category: 'Cidade',
+    title: 'Ponte Internacional da Amizade recebe nova iluminação em LED',
+    lead: 'Projeto transforma a travessia Brasil-Paraguai em atração turística noturna de Foz.',
+    time: '1d atrás',
+    author: 'Carla Dias',
+    likes: 4102,
+    shares: 1540,
+    bg: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=900&q=90',
+  },
+];
+
+let currentIndex = 0;
+let muted = true;
+const feed = document.getElementById('feed');
+const dotsContainer = document.getElementById('progress-dots');
+const scrollHint = document.getElementById('scroll-hint');
+
+function buildCards() {
+  NEWS.forEach((item, i) => {
+    const card = document.createElement('div');
+    card.className = 'card' + (item.type === 'ad' ? ' ad-card' : '') + (item.type === 'video' ? ' video-card' : '');
+    card.dataset.index = i;
+
+    let inner = `<div class="card-bg" style="background-image:url('${item.bg}')"></div>
+                 <div class="card-overlay"></div>`;
+
+    if (item.type === 'ad') {
+      inner += `
+        <div class="ad-badge">Patrocinado</div>
+        <div class="card-content">
+          <p class="ad-brand">${item.brand}</p>
+          <h2 class="ad-title">${item.title}</h2>
+          <p class="card-lead">${item.lead}</p>
+          <button class="ad-cta">🛍️ ${item.cta}</button>
+        </div>`;
+    } else {
+      // Video paused overlay
+      if (item.type === 'video') {
+        inner += `
+          <div class="video-paused-overlay" onclick="showToast('▶️ Vídeo em breve no app!')">
+            <div class="play-btn-big">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+          </div>
+          <div class="video-duration">▶ ${item.duration}</div>`;
+      }
+
+      const catIcon = item.type === 'video'
+        ? `<span class="video-rec-dot"></span><span class="video-label">${item.category}</span>`
+        : `<div class="cat-dot"></div><span class="cat-label">${item.category}</span>`;
+
+      inner += `
+        <div class="cat-tag">${catIcon}</div>
+        <div class="card-actions">
+          <button class="action-btn" onclick="toggleLike(this, ${i})">
+            <div class="action-icon">❤️</div>
+            <span class="action-count" id="likes-${i}">${item.likes}</span>
+          </button>
+          <button class="action-btn" onclick="shareCard(${i})">
+            <div class="action-icon">🔗</div>
+            <span class="action-count">${item.shares}</span>
+          </button>
+          <button class="action-btn" onclick="saveCard(this)">
+            <div class="action-icon">🔖</div>
+            <span class="action-count">Salvar</span>
+          </button>
+        </div>
+        <div class="card-content">
+          <div class="card-meta">
+            <span>${item.author}</span><div class="meta-dot"></div><span>${item.time}</span>
+          </div>
+          <h2 class="card-title">${item.title}</h2>
+          <p class="card-lead">${item.lead}</p>
+          <a class="read-more" href="#">${item.type === 'video' ? '▶️ Assistir vídeo' : '📰 Ler notícia completa'} →</a>
+        </div>`;
+
+      if (item.hasBanner) {
+        inner += `
+          <div class="banner-overlay">
+            <div class="banner-logo">${item.banner.logo}</div>
+            <div class="banner-text">
+              <strong>${item.banner.name}</strong>
+              <span>${item.banner.sub}</span>
+            </div>
+            <button class="banner-cta">${item.banner.cta}</button>
+            <button class="banner-close" onclick="this.closest('.banner-overlay').style.display='none'">✕</button>
+          </div>`;
+      }
+    }
+
+    card.innerHTML = inner;
+    feed.appendChild(card);
+  });
+
+  // dots
+  NEWS.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot';
+    d.dataset.index = i;
+    dotsContainer.appendChild(d);
+  });
+
+  activateCard(0);
+}
+
+function activateCard(index) {
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.dot').forEach(d => d.classList.remove('active'));
+
+  const card = document.querySelector(`.card[data-index="${index}"]`);
+  const dot = document.querySelector(`.dot[data-index="${index}"]`);
+  if (card) card.classList.add('active');
+  if (dot) dot.classList.add('active');
+
+  currentIndex = index;
+  if (index > 0) scrollHint.style.display = 'none';
+
+  // mute button visibility
+  const hasVideo = NEWS[index]?.type === 'video';
+  document.getElementById('mute-btn').classList.toggle('visible', hasVideo);
+}
+
+// Intersection Observer for snap
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const i = parseInt(entry.target.dataset.index);
+      activateCard(i);
+    }
+  });
+}, { root: feed, threshold: 0.6 });
+
+buildCards();
+
+document.querySelectorAll('.card').forEach(card => observer.observe(card));
+
+// NAV pills
+document.querySelectorAll('.nav-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('.nav-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+  });
+});
+
+function toggleLike(btn, index) {
+  btn.classList.toggle('liked');
+  const countEl = document.getElementById(`likes-${index}`);
+  const n = parseInt(countEl.textContent.replace(/[^\d]/g, '')) || NEWS[index].likes;
+  const liked = btn.classList.contains('liked');
+  countEl.textContent = liked ? (n + 1) : (n - 1);
+
+  // burst effect
+  const icon = btn.querySelector('.action-icon');
+  icon.classList.add('burst');
+  setTimeout(() => icon.classList.remove('burst'), 400);
+}
+
+function shareCard(index) {
+  const news = NEWS[index];
+  if (navigator.share) {
+    navigator.share({ title: news.title, url: window.location.href });
+  } else {
+    navigator.clipboard.writeText(window.location.href);
+    showToast('Link copiado! 🔗');
+  }
+}
+
+function saveCard(btn) {
+  const icon = btn.querySelector('.action-icon');
+  icon.textContent = '✅';
+  const count = btn.querySelector('.action-count');
+  count.textContent = 'Salvo!';
+}
+
+function toggleMute() {
+  muted = !muted;
+  document.getElementById('mute-btn').textContent = muted ? '🔇' : '🔊';
+}
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.style.cssText = `position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.12);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.15);padding:10px 20px;border-radius:24px;font-size:13px;font-weight:600;color:white;z-index:999;pointer-events:none;`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2500);
+}
+
+// Keyboard nav
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown' || e.key === ' ') {
+    e.preventDefault();
+    const next = Math.min(currentIndex + 1, NEWS.length - 1);
+    document.querySelector(`.card[data-index="${next}"]`)?.scrollIntoView({ behavior: 'smooth' });
+  }
+  if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    const prev = Math.max(currentIndex - 1, 0);
+    document.querySelector(`.card[data-index="${prev}"]`)?.scrollIntoView({ behavior: 'smooth' });
+  }
+});
+</script>
+</body>
+</html>
